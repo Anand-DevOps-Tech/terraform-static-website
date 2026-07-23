@@ -25,5 +25,5 @@ variable "environment" {
 variable "git_repo_url" {
   description = "Git repository URL containing static website files (HTML, CSS, JS, Images)"
   type        = string
-  default     = "https://github.com/your-username/oxer-html.git"
+  default     = "https://github.com/Anand-DevOps-Tech/terraform-static-website.git"
 }
