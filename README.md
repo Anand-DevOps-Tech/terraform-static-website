@@ -105,3 +105,160 @@ The `Jenkinsfile` provides an automated build and deployment pipeline with manua
    - Under **Pipeline**, set Definition to **Pipeline script from SCM**.
    - Select **Git**, set the Repository URL, and specify `Jenkinsfile` as the Script Path.
    - Run **Build with Parameters** to initiate deployment.
+# AWS EC2 Terraform + Jenkins CI/CD Architecture
+
+```text
+                         +----------------------+
+                         |      Developer       |
+                         +----------+-----------+
+                                    |
+                                    | Push Code
+                                    v
+                      +-------------------------------+
+                      |      GitHub Repository        |
+                      | HTML | CSS | JS | Terraform   |
+                      +---------------+---------------+
+                                      |
+                                      | Git Clone
+                                      v
+                          +--------------------------+
+                          |      Jenkins Server      |
+                          |    Pipeline Job (CI/CD)  |
+                          +------------+-------------+
+                                       |
+                                       |
+             ---------------------------------------------------------
+             |                     |                |                |
+             v                     v                v                v
+     Checkout Code        Terraform Init   Terraform Validate  Terraform Plan
+                                                                     |
+                                                                     |
+                                                             Build with Parameters
+                                                                     |
+                                             -----------------------------------------
+                                             |                    |                  |
+                                             |                    |                  |
+                                             v                    v                  v
+                                        ACTION=plan        ACTION=apply      ACTION=destroy
+                                                                  |                  |
+                                                                  |                  |
+                                                                  v                  v
+                                                         Terraform Apply     Terraform Destroy
+                                                                  |
+                                                                  |
+                                                                  v
+                           +--------------------------------------------------+
+                           |                    AWS Cloud                     |
+                           +--------------------------------------------------+
+                                          |
+                       -----------------------------------------
+                       |                                       |
+                       v                                       v
+              Security Group                         Amazon Linux EC2
+              Port 22 (SSH)                          Apache Installed
+              Port 80 (HTTP)                         Git Installed
+                                                     Website Deployed
+                                                            |
+                                                            |
+                                                            v
+                                                Static Website Running
+                                                            |
+                                                            v
+                                           http://<EC2-Public-IP>
+```
+
+---
+
+# Deployment Workflow
+
+```text
+Developer
+    │
+    ▼
+Push Code to GitHub
+    │
+    ▼
+Jenkins Pipeline Trigger
+    │
+    ▼
+Checkout Repository
+    │
+    ▼
+Terraform Init
+    │
+    ▼
+Terraform Validate
+    │
+    ▼
+Terraform Plan
+    │
+    ▼
+Terraform Apply
+    │
+    ▼
+AWS Creates:
+    ├── Security Group
+    ├── EC2 Instance
+    └── User Data Execution
+             │
+             ▼
+Install Apache
+Install Git
+Clone Website
+Copy HTML/CSS/JS
+Start Apache
+             │
+             ▼
+Website Live
+```
+
+---
+
+# Terraform Resource Flow
+
+```text
+Terraform
+     │
+     ▼
+Fetch Latest Amazon Linux AMI
+     │
+     ▼
+Create Security Group
+     │
+     ▼
+Launch EC2 Instance
+     │
+     ▼
+Run User Data
+     │
+     ├── Update Packages
+     ├── Install Apache
+     ├── Install Git
+     ├── Clone GitHub Repository
+     ├── Copy Website Files
+     └── Start Apache
+     │
+     ▼
+Website Available
+```
+
+---
+
+# AWS Resources Created
+
+```text
+AWS
+│
+├── EC2 Instance
+│      ├── Amazon Linux 2023
+│      ├── Apache Web Server
+│      ├── Git Installed
+│      └── Static Website
+│
+├── Security Group
+│      ├── Port 22 (SSH)
+│      └── Port 80 (HTTP)
+│
+└── Key Pair
+       └── SSH Access
+```
