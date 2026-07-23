@@ -21,3 +21,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "git_repo_url" {
+  description = "Git repository URL containing static website files (HTML, CSS, JS, Images)"
+  type        = string
+  default     = "https://github.com/your-username/oxer-html.git"
+}
