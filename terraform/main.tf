@@ -57,11 +57,25 @@ resource "aws_instance" "web_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y httpd git
+              # Update system packages and install Apache web server & Git
+              dnf update -y
+              dnf install -y httpd git
+
+              # Start and enable Apache service
               systemctl start httpd
               systemctl enable httpd
-              echo "<h1>Welcome to ${var.app_name} (${var.environment})</h1>" > /var/www/html/index.html
+
+              # Remove default Apache welcome files
+              rm -rf /var/www/html/*
+
+              # Clone website repository and copy all HTML, CSS, JS, and image files
+              git clone ${var.git_repo_url} /tmp/webfiles
+              cp -r /tmp/webfiles/* /var/www/html/
+              rm -rf /tmp/webfiles
+
+              # Set proper ownership and permissions
+              chown -R apache:apache /var/www/html
+              chmod -R 755 /var/www/html
               EOF
 
   tags = {
