@@ -22,7 +22,8 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main',
+                url: 'https://github.com/anand1590/static-website.git'
             }
         }
 
