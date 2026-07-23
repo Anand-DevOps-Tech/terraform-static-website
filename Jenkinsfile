@@ -5,19 +5,12 @@ pipeline {
         choice(
             name: 'ACTION',
             choices: ['plan', 'apply', 'destroy'],
-            description: 'Terraform Action'
-        )
-
-        string(
-            name: 'AWS_REGION',
-            defaultValue: 'us-east-1',
-            description: 'AWS Region'
+            description: 'Select Terraform Action'
         )
     }
 
     environment {
         TF_DIR = 'terraform'
-        AWS_CREDENTIALS_ID = 'aws-credentials'
     }
 
     stages {
@@ -25,30 +18,14 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/Anand-DevOps-Tech/terraform-static-website.git'
+                url: 'https://github.com/Anand-DevOps-Tech/terraform-static-website.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS_ID}",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-
-                    dir("${TF_DIR}") {
-                        sh 'terraform init'
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Format Check') {
-            steps {
                 dir("${TF_DIR}") {
-                    sh 'terraform fmt -check'
+                    sh 'terraform init'
                 }
             }
         }
@@ -62,102 +39,43 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-
             when {
-                expression {
-                    params.ACTION == 'plan' || params.ACTION == 'apply'
-                }
+                expression { params.ACTION == 'plan' }
             }
-
             steps {
-
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS_ID}",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-
-                    dir("${TF_DIR}") {
-
-                        sh """
-                        terraform plan \
-                        -var="aws_region=${params.AWS_REGION}" \
-                        -out=tfplan
-                        """
-
-                    }
+                dir("${TF_DIR}") {
+                    sh 'terraform plan'
                 }
             }
         }
 
         stage('Terraform Apply') {
-
             when {
-                expression {
-                    params.ACTION == 'apply'
-                }
+                expression { params.ACTION == 'apply' }
             }
-
             steps {
-
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS_ID}",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-
-                    dir("${TF_DIR}") {
-                        sh 'terraform apply -auto-approve tfplan'
-                    }
-
+                dir("${TF_DIR}") {
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
 
         stage('Terraform Destroy') {
-
             when {
-                expression {
-                    params.ACTION == 'destroy'
-                }
+                expression { params.ACTION == 'destroy' }
             }
-
             steps {
-
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS_ID}",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-
-                    dir("${TF_DIR}") {
-
-                        sh """
-                        terraform destroy \
-                        -var="aws_region=${params.AWS_REGION}" \
-                        -auto-approve
-                        """
-
-                    }
-
+                dir("${TF_DIR}") {
+                    sh 'terraform destroy -auto-approve'
                 }
             }
         }
     }
 
     post {
-
-        always {
-            cleanWs()
-        }
-
         success {
-            echo "Pipeline completed successfully."
+            echo "Terraform ${params.ACTION} completed successfully."
         }
-
         failure {
             echo "Pipeline failed."
         }
